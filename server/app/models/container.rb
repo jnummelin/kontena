@@ -7,6 +7,7 @@ class Container
   field :driver, type: String
   field :exec_driver, type: String
   field :image, type: String
+  field :image_id, type: String
   field :env, type: Array, default: []
   field :network_settings, type: Hash, default: {}
   field :state, type: Hash, default: {}
@@ -96,6 +97,7 @@ class Container
         driver: info['Driver'],
         exec_driver: info['ExecDriver'],
         image: info['Config']['Image'],
+        image_id: info['Image'],
         env: info['Config']['Env'],
         network_settings: self.parse_docker_network_settings(info['NetworkSettings']),
         state: {
@@ -153,5 +155,9 @@ class Container
     else
       raise e
     end
+  end
+
+  def up_to_date?
+    self.image_id == self.grid_service.image.image_id && self.created_at > self.grid_service.updated_at
   end
 end
