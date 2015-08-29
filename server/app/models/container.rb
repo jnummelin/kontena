@@ -1,3 +1,5 @@
+require 'ipaddr'
+
 class Container
   include Mongoid::Document
   include Mongoid::Timestamps
@@ -17,6 +19,7 @@ class Container
   field :volumes, type: Array, default: []
   field :deploy_rev, type: String
   field :container_type, type: String, default: 'container'
+  field :overlay_cidr, type: String
 
   validates_uniqueness_of :container_id, scope: [:host_node_id]
 
@@ -33,6 +36,7 @@ class Container
   index({ deleted_at: 1 }, {sparse: true})
   index({ container_id: 1 })
   index({ state: 1 })
+  index({ grid_id: 1, overlay_cidr: 1 }, { sparse: true, unique: true })
 
   default_scope -> { where(deleted_at: nil, container_type: 'container') }
   scope :deleted, -> { where(deleted_at: {'$ne' => nil}) }
