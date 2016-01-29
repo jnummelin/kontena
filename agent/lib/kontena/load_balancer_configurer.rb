@@ -34,24 +34,33 @@ module Kontena
       balance = env_hash['KONTENA_LB_BALANCE'] || 'roundrobin'
       custom_settings = env_hash['KONTENA_LB_CUSTOM_SETTINGS']
       info "registering #{service_name} to load balancer #{name} (#{mode})"
-      if mode == 'http'
-        virtual_hosts = env_hash['KONTENA_LB_VIRTUAL_HOSTS']
-        virtual_path = env_hash['KONTENA_LB_VIRTUAL_PATH']
-        if virtual_hosts.to_s == '' && virtual_path.to_s == ''
-          virtual_path = env_hash['KONTENA_LB_VIRTUAL_PATH'] || '/'
+      modes = mode.split(',')
+      modes.each { |m|
+        if m == 'http'
+          puts "http mode"
+          virtual_hosts = env_hash['KONTENA_LB_VIRTUAL_HOSTS']
+          virtual_path = env_hash['KONTENA_LB_VIRTUAL_PATH']
+          if virtual_hosts.to_s == '' && virtual_path.to_s == ''
+            virtual_path = env_hash['KONTENA_LB_VIRTUAL_PATH'] || '/'
+          end
+          set("#{etcd_path}/services/#{service_name}/balance", balance)
+          set("#{etcd_path}/services/#{service_name}/custom_settings", custom_settings)
+          set("#{etcd_path}/services/#{service_name}/virtual_hosts", virtual_hosts)
+          set("#{etcd_path}/services/#{service_name}/virtual_path", virtual_path)
+          #rmdir("#{etcd_path}/tcp-services/#{service_name}") rescue nil
+        else
+          puts "tcp mode"
+          external_port = env_hash['KONTENA_LB_EXTERNAL_PORT_TCP'] || env_hash['KONTENA_LB_EXTERNAL_PORT'] || '5000'
+          set("#{etcd_path}/tcp-services/#{service_name}/external_port", external_port)
+          external_port = env_hash['KONTENA_LB_INTERNAL_PORT_TCP'] || env_hash['KONTENA_LB_INTERNAL_PORT'] || '5000'
+          set("#{etcd_path}/tcp-services/#{service_name}/internal_port", internal_port)
+          set("#{etcd_path}/tcp-services/#{service_name}/balance", balance)
+          set("#{etcd_path}/tcp-services/#{service_name}/custom_settings", custom_settings)
+          #rmdir("#{etcd_path}/services/#{service_name}") rescue nil
         end
-        set("#{etcd_path}/services/#{service_name}/balance", balance)
-        set("#{etcd_path}/services/#{service_name}/custom_settings", custom_settings)
-        set("#{etcd_path}/services/#{service_name}/virtual_hosts", virtual_hosts)
-        set("#{etcd_path}/services/#{service_name}/virtual_path", virtual_path)
-        rmdir("#{etcd_path}/tcp-services/#{service_name}") rescue nil
-      else
-        external_port = env_hash['KONTENA_LB_EXTERNAL_PORT'] || '5000'
-        set("#{etcd_path}/tcp-services/#{service_name}/external_port", external_port)
-        set("#{etcd_path}/tcp-services/#{service_name}/balance", balance)
-        set("#{etcd_path}/tcp-services/#{service_name}/custom_settings", custom_settings)
-        rmdir("#{etcd_path}/services/#{service_name}") rescue nil
-      end
+
+      }
+
 
       remove_old_configs(name, service_name)
     rescue => exc

@@ -64,6 +64,29 @@ describe Kontena::LoadBalancerConfigurer do
       end
     end
 
+    it 'sets tcp and http values to etcd' do
+      container.env_hash['KONTENA_LB_MODE'] = 'http,tcp'
+      container.env_hash['KONTENA_LB_EXTERNAL_PORT_TCP'] = '22'
+      container.env_hash['KONTENA_LB_INTERNAL_PORT_TCP'] = '22'
+      storage = {}
+      allow(etcd).to receive(:set) do |key, value|
+        storage[key] = value[:value]
+      end
+      subject.ensure_config(container)
+      expected_values = {
+        "#{etcd_prefix}/lb/services/test-api/balance" => 'roundrobin',
+        "#{etcd_prefix}/lb/services/test-api/custom_settings" => nil,
+        "#{etcd_prefix}/lb/services/test-api/virtual_path" => '/',
+        "#{etcd_prefix}/lb/services/test-api/virtual_hosts" => nil,
+        "#{etcd_prefix}/lb/tcp-services/test-api/balance" => 'roundrobin',
+        "#{etcd_prefix}/lb/tcp-services/test-api/external_port" => '22',
+        "#{etcd_prefix}/lb/tcp-services/test-api/internal_port" => '22',
+      }
+      expected_values.each do |k, v|
+        expect(storage[k]).to eq(v)
+      end
+    end
+
     it 'sets custom virtual_path' do
       container.env_hash['KONTENA_LB_VIRTUAL_PATH'] = '/virtual'
       expect(etcd).to receive(:set).
