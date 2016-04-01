@@ -274,6 +274,7 @@ module Kontena
         secrets_hash.each do |name, value|
           env << "#{name}=#{value}"
         end
+        env << "KONTENA_NODE_HOSTNAME=#{ENV['HOSTNAME']}"
         env
       end
     end

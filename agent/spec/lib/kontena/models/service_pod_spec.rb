@@ -136,10 +136,15 @@ describe Kontena::Models::ServicePod do
       expect(subject.service_config['Env']).to include('PASSWD=secret123')
     end
 
+    it 'includes hostname in Env' do
+      ENV['HOSTNAME'] = ENV['HOSTNAME'] || 'foobar' #Just to be sure HOSTNAME is not nil
+      expect(subject.service_config['Env']).to include("KONTENA_NODE_HOSTNAME=#{ENV['HOSTNAME']}")
+    end
+
     it 'includes secrets in Env with same key' do
       data['secrets'] << {'name' => 'SSL_CERTS', 'value' => 'foo', 'type' => 'env'}
       data['secrets'] << {'name' => 'SSL_CERTS', 'value' => 'bar', 'type' => 'env'}
-      expect(subject.service_config['Env'].last).to eq("SSL_CERTS=foo\nbar")
+      expect(subject.service_config['Env']).to include("SSL_CERTS=foo\nbar")
     end
 
     it 'does not include user if nil' do
