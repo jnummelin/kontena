@@ -98,6 +98,28 @@ module GridServices
         end
       end
       string :restart
+      hash :schedules do
+        optional do
+          array :deploy do
+            hash do
+              required do
+                string :name
+                string :type, matches: /^(cron|every)$/
+                string :schedule
+              end
+            end
+          end
+          array :start do
+            hash do
+              required do
+                string :name
+                string :type, matches: /^(cron|every)$/
+                string :schedule
+              end
+            end
+          end
+        end
+      end
     end
 
     def validate
@@ -117,7 +139,11 @@ module GridServices
       re = Regexp.union(/^no$/, /^on-failure/, /^always$/, /^unless-stopped$/)
       if self.restart && self.restart.match(re).nil?
         add_error(:restart, :invalid_restart, 'Invalid restart option provided')
-      end 
+      end
+      # FIXME too many conditionals
+      if self.schedules && self.schedules['start'] && self.restart && self.restart != 'never'
+        add_error(:restart, :invalid_restart, 'Invalid restart policy for scheduled service start')
+      end
     end
 
     def execute
@@ -138,6 +164,12 @@ module GridServices
       attributes.delete(:secrets)
       if self.secrets
         attributes[:secrets] = self.build_grid_service_secrets([])
+      end
+
+      attributes.delete(:schedules)
+      if self.schedules
+        attributes[:schedules] = self.build_grid_service_schedules([])
+        attributes[:restart] = 'never' if self.schedules['start']
       end
 
       grid_service = GridService.new(attributes)

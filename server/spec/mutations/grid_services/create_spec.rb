@@ -304,5 +304,80 @@ describe GridServices::Create do
       ).run
       expect(outcome.success?).to be_falsey
     end
+
+    it 'saves cron deploy schedules' do
+      outcome = described_class.new(
+          current_user: user,
+          grid: grid,
+          image: 'redis:2.8',
+          name: 'redis',
+          stateful: false,
+          schedules: {
+            deploy: [{
+              name: 'foo',
+              type: 'cron',
+              schedule: '5 0 * * *'
+            }]
+          }
+      ).run
+      expect(outcome.result.schedules[0].command).to eq('deploy')
+    end
+
+    it 'saves every deploy schedules' do
+      outcome = described_class.new(
+          current_user: user,
+          grid: grid,
+          image: 'redis:2.8',
+          name: 'redis',
+          stateful: false,
+          schedules: {
+            deploy: [{
+              name: 'foo',
+              type: 'every',
+              schedule: '12h'
+            }]
+          }
+      ).run
+      expect(outcome.result.schedules[0].type).to eq('every')
+    end
+
+    it 'saves start schedules and sets restart policy to never' do
+      outcome = described_class.new(
+          current_user: user,
+          grid: grid,
+          image: 'redis:2.8',
+          name: 'redis',
+          stateful: false,
+          schedules: {
+            start: [{
+              name: 'foo',
+              type: 'every',
+              schedule: '12h'
+            }]
+          }
+      ).run
+      expect(outcome.success?).to be_truthy
+      expect(outcome.result.schedules[0].type).to eq('every')
+      expect(outcome.result.restart).to eq('never')
+    end
+
+    it 'fails to save start schedule when unmatching restart policy given' do
+      outcome = described_class.new(
+          current_user: user,
+          grid: grid,
+          image: 'redis:2.8',
+          name: 'redis',
+          stateful: false,
+          restart: 'always',
+          schedules: {
+            start: [{
+              name: 'foo',
+              type: 'every',
+              schedule: '12h'
+            }]
+          }
+      ).run
+      expect(outcome.success?).to be_falsey
+    end
   end
 end

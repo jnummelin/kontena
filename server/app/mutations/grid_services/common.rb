@@ -63,5 +63,27 @@ module GridServices
 
       service_secrets
     end
+
+    # @param [Array<GridServiceSchedules>] existing_schedules
+    # @return [Array<GridServiceSchedule>]
+    def build_grid_service_schedules(existing_hooks)
+      service_schedules = []
+      self.schedules.each do |command, schedules|
+        schedules.each do |schedule|
+
+          service_schedule = GridServiceSchedule.new(
+              name: schedule['name'],
+              type: schedule['type'],
+              command: command,
+              schedule: schedule['schedule']
+          )
+          service_schedules << service_schedule
+        end
+
+      end
+
+      service_schedules
+    end
+
   end
 end

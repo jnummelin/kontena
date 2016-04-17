@@ -45,6 +45,7 @@ class GridService
   embeds_many :hooks, class_name: 'GridServiceHook'
   embeds_many :secrets, class_name: 'GridServiceSecret'
   embeds_one :deploy_opts, class_name: 'GridServiceDeployOpt', autobuild: true
+  embeds_many :schedules, class_name: 'GridServiceSchedule'
 
   index({ grid_id: 1 })
   index({ name: 1 })
@@ -200,4 +201,12 @@ class GridService
 
     false
   end
+
+  # Are there any scheduled actions?
+  #
+  # @return [Boolean]
+  def schedules?
+    self.schedules.size > 0
+  end
+
 end
