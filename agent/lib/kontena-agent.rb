@@ -27,6 +27,7 @@ require_relative 'kontena/workers/stats_worker'
 require_relative 'kontena/workers/event_worker'
 require_relative 'kontena/workers/weave_worker'
 require_relative 'kontena/workers/image_cleanup_worker'
+require_relative 'kontena/workers/service_discovery_worker'
 
 require_relative 'kontena/load_balancers/configurer'
 require_relative 'kontena/load_balancers/registrator'
